@@ -1,0 +1,49 @@
+{
+  "umbral": 0.3599999999999999,
+  "categorias": {
+    "Gender": [
+      "Female",
+      "Male",
+      "Other"
+    ],
+    "City_Type": [
+      "Rural",
+      "Suburban",
+      "Urban"
+    ],
+    "Current_Car_Type": [
+      "Hatchback",
+      "SUV",
+      "Sedan",
+      "Truck"
+    ],
+    "Home_Charging_Possible": [
+      "No",
+      "Yes"
+    ],
+    "Subsidy_Available": [
+      "No",
+      "Yes"
+    ],
+    "Range_Anxiety_Level": [
+      "High",
+      "Low",
+      "Medium"
+    ]
+  },
+  "columnas": [
+    "Age",
+    "Annual_Income_USD",
+    "Daily_Commute_km",
+    "Number_of_Cars_Owned",
+    "Charging_Stations_Near_Home",
+    "Charging_Stations_Near_Work",
+    "Environmental_Concern_Level",
+    "Gender",
+    "City_Type",
+    "Current_Car_Type",
+    "Home_Charging_Possible",
+    "Subsidy_Available",
+    "Range_Anxiety_Level"
+  ]
+}

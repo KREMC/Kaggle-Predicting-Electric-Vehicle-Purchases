@@ -1,0 +1,11 @@
+# Notebook que no quiero subir
+Untitled.ipynb
+
+# Predicciones generadas
+predicciones/*.csv
+
+
+
+# Archivos temporales
+.ipynb_checkpoints/
+catboost_info/
