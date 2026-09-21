@@ -4,7 +4,8 @@ Untitled.ipynb
 # Predicciones generadas
 predicciones/*.csv
 
-
+# Datos de Kaggle (pesados y con reglas de redistribución)
+datos/
 
 # Archivos temporales
 .ipynb_checkpoints/
