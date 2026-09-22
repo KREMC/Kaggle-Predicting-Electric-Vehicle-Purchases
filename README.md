@@ -1,19 +1,19 @@
 # 🚗⚡ Predicción de Compra de Vehículos Eléctricos
 
-Modelo de clasificación con **XGBoost** para predecir si una persona comprará un vehículo eléctrico, desarrollado para la competencia de Kaggle [Predicting Electric Vehicle Purchases](https://www.kaggle.com/competitions/playground-series-s6e9/overview) (Playground Series – Season 6, Episode 9).
+Comparación de dos modelos de *gradient boosting* — **XGBoost** y **LightGBM** — para predecir si una persona comprará un vehículo eléctrico. Desarrollado para la competencia de Kaggle [Predicting Electric Vehicle Purchases](https://www.kaggle.com/competitions/playground-series-s6e9/overview) (Playground Series – Season 6, Episode 9).
 
 ---
 
-## 📌 Resumen
+## 📌 Resultados
 
-| Métrica (validación) | Valor |
-|---|---|
-| **AUC-ROC** | **0.942** |
-| Accuracy | 0.89 |
-| Recall clase "Yes" | 0.79 |
-| Precision clase "Yes" | 0.65 |
-| F1 clase "Yes" | 0.72 |
-| Umbral de decisión | 0.36 |
+| Modelo | AUC-ROC | Mejor iteración | Umbral | Precision | Recall | F1 | Accuracy |
+|---|---|---|---|---|---|---|---|
+| XGBoost | **0.9417** | 497 | 0.36 | 0.65 | 0.79 | 0.7162 | 0.89 |
+| LightGBM | 0.9416 | **375** | 0.36 | 0.65 | 0.79 | 0.7161 | 0.89 |
+
+*Precision, recall y F1 corresponden a la clase minoritaria ("Sí compra"), medidas sobre el mismo conjunto de validación.*
+
+**Empate técnico:** la diferencia de AUC es de 0.0001, pero LightGBM alcanzó ese punto con 122 iteraciones menos.
 
 ---
 
@@ -33,14 +33,18 @@ Solo el **17.5 %** de las personas compra un vehículo eléctrico. Un modelo que
 
 ## ⚙️ Metodología
 
-1. **División estratificada 80/20** para mantener la proporción de clases en entrenamiento y validación.
-2. **Variables categóricas nativas** de XGBoost (`enable_categorical=True`), sin one-hot encoding ni escalado, ya que los árboles no dependen de la escala de las variables.
-3. **Early stopping** con 100 rondas de paciencia: el modelo alcanzó su mejor AUC en la **iteración 497**.
+Ambos modelos comparten el mismo procedimiento para que la comparación sea justa:
+
+1. **División estratificada 80/20** con la misma semilla (`random_state=42`).
+2. **Variables categóricas nativas**, sin one-hot encoding ni escalado: los árboles dividen por umbrales, así que la escala de las variables no afecta al resultado.
+3. **Early stopping** con 100 rondas de paciencia sobre el AUC de validación.
 4. **Optimización del umbral de decisión** para maximizar el F1 de la clase minoritaria.
 5. **Interpretación** con importancia por *gain* y valores **SHAP**.
-6. **Persistencia** del modelo, el umbral y las categorías para predecir sobre datos nuevos sin reentrenar.
+6. **Persistencia** del modelo, el umbral y las categorías para predecir sin reentrenar.
 
 ### Hiperparámetros
+
+**XGBoost**
 
 ```python
 XGBClassifier(
@@ -58,44 +62,90 @@ XGBClassifier(
 )
 ```
 
+**LightGBM**
+
+```python
+LGBMClassifier(
+    n_estimators=3000,
+    learning_rate=0.05,
+    num_leaves=63,
+    min_child_samples=50,
+    subsample=0.8,
+    subsample_freq=1,
+    colsample_bytree=0.8,
+    reg_lambda=1.0,
+    n_jobs=-1,
+    random_state=42,
+)
+```
+
+> ⚠️ En LightGBM, `subsample` se ignora en silencio si no se define también `subsample_freq`. No lanza ningún error: simplemente no se aplica.
+
 ---
 
 ## 🎯 Ajuste del umbral
 
 Por defecto un clasificador predice "Yes" cuando la probabilidad supera **0.5**. Con clases desbalanceadas, ese corte deja escapar a muchos compradores reales.
 
-Se evaluaron umbrales entre 0.10 y 0.90, y el que maximizó el F1 fue **0.36**:
+Se evaluaron umbrales entre 0.10 y 0.90 y, en ambos modelos, el que maximizó el F1 fue **0.36**:
 
 | Clase | Precision | Recall | F1 | Soporte |
 |---|---|---|---|---|
-| No (0) | 0.95 | 0.91 | 0.93 | 110 377 |
-| Yes (1) | 0.65 | 0.79 | 0.72 | 23 356 |
+| No compra (0) | 0.95 | 0.91 | 0.93 | 110 377 |
+| Sí compra (1) | 0.65 | 0.79 | 0.72 | 23 356 |
 
 Con este umbral el modelo **detecta 8 de cada 10 compradores reales**, a cambio de que aproximadamente 1 de cada 3 personas marcadas como compradoras no lo sea. En un caso de marketing es un intercambio favorable: cuesta menos contactar a un cliente que no compra que perder a uno que sí lo haría.
+
+### Curva ROC — LightGBM
+
+![Curva ROC LightGBM](imagenes/curva_roc_lgbm.png)
+
+### Matriz de confusión — LightGBM
+
+![Matriz de confusión LightGBM](imagenes/matriz_confusion_lgbm.png)
+
+La matriz normalizada por clase real es la más informativa: la fila inferior muestra qué porcentaje de compradores reales detecta el modelo (recall) y cuántos se escapan.
 
 ---
 
 ## 🔍 ¿Qué variables influyen más?
 
-![Importancia de variables](imagenes/importancia_variables.png)
+**XGBoost**
 
-- **Gain (izquierda):** mide cuánto mejora el modelo cada vez que usa una variable. Domina la **disponibilidad de subsidio**.
-- **SHAP (derecha):** mide cuánto mueve cada variable la predicción individual. Lidera la **preocupación ambiental**, seguida muy de cerca por el **subsidio** y luego el **ingreso anual**.
+![Importancia XGBoost](imagenes/importancia_variables.png)
 
-Ambas medidas coinciden: la motivación ambiental y el incentivo económico explican la mayor parte de la decisión. En cambio, las estaciones de carga cercanas, la cantidad de autos y el género apenas influyen.
+**LightGBM**
+
+![Importancia LightGBM](imagenes/importancia_lgbm.png)
+
+Las dos medidas responden preguntas distintas:
+
+- **Gain:** cuánto mejora el modelo cada vez que usa una variable para dividir.
+- **SHAP:** cuánto mueve esa variable la predicción de cada persona en particular.
+
+Por eso el orden de los dos primeros puestos se intercambia entre una medida y otra, y entre un modelo y otro. Lo relevante es que **ambos algoritmos, con ambas métricas, señalan el mismo par de variables en la cima**: `Environmental_Concern_Level` y `Subsidy_Available`, seguidas de `Annual_Income_USD`.
+
+Esa coincidencia es un buen indicio de que el patrón está en los datos y no es un artefacto de un algoritmo concreto: **la motivación ambiental y el incentivo económico deciden la compra**. En cambio, las estaciones de carga cercanas, la cantidad de autos y el género apenas influyen.
 
 ---
 
 ## 📁 Estructura del proyecto
 
 ```
-├── datos/                 # train.csv y test.csv (descargar desde Kaggle)
+├── datos/                      # train.csv y test.csv (descargar desde Kaggle)
 ├── modelo/
-│   ├── modelo_xgb.json    # modelo entrenado
-│   └── config_modelo.json # umbral, categorías y columnas
+│   ├── modelo_xgb.json         # XGBoost entrenado
+│   ├── config_modelo.json      # umbral, categorías y columnas (XGBoost)
+│   ├── modelo_lgbm.pkl         # LightGBM entrenado
+│   └── config_lgbm.json        # umbral, categorías y columnas (LightGBM)
 ├── imagenes/
-│   └── importancia_variables.png
-├── XGBOOST.ipynb          # notebook principal
+│   ├── importancia_variables.png
+│   ├── importancia_lgbm.png
+│   ├── curva_roc_lgbm.png
+│   └── matriz_confusion_lgbm.png
+├── predicciones/               # archivos de submission
+├── XGBOOST.ipynb               # modelo 1
+├── LGB.ipynb                   # modelo 2
 └── README.md
 ```
 
@@ -110,15 +160,15 @@ Ambas medidas coinciden: la motivación ambiental y el incentivo económico expl
 2. Descarga `train.csv` y `test.csv` desde la [página de la competencia](https://www.kaggle.com/competitions/playground-series-s6e9/data) y colócalos en `datos/`.
 3. Instala las dependencias:
    ```bash
-   pip install pandas numpy scikit-learn xgboost matplotlib
+   pip install pandas numpy scikit-learn xgboost lightgbm matplotlib joblib
    ```
-4. Abre y ejecuta `XGBOOST.ipynb`.
+4. Ejecuta `XGBOOST.ipynb` y `LGB.ipynb`.
 
 ---
 
 ## 🛠️ Tecnologías
 
-Python · Pandas · NumPy · Scikit-learn · XGBoost · Matplotlib · Jupyter
+Python · Pandas · NumPy · Scikit-learn · XGBoost · LightGBM · Matplotlib · Jupyter
 
 ---
 
