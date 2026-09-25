@@ -104,19 +104,19 @@ Accuracy, Precision, Recall, F1 macro y **ROC-AUC** sobre el conjunto de prueba,
 
 ### Comparación visual
 
-![Comparación de modelos y ensambles](images/comparacion_de_modelos_y_ensambles.png)
+![Comparación de modelos y ensambles](imagenes/comparacion_de_modelos_y_ensambles.png)
 
 ### Curvas ROC
 
-![Curvas ROC](images/comparacion_de_curvas_.png)
+![Curvas ROC](imagenes/comparacion_de_curvas_.png)
 
 ### Matrices de confusión
 
-![Matrices de confusión](images/matriz_de_resultadtos_de_los_modelos.png)
+![Matrices de confusión](imagenes/matriz_de_resultadtos_de_los_modelos.png)
 
 ### Acuerdo entre modelos
 
-![Acuerdo entre modelos](images/Matriz_de_acuerdo_entre_modelos.png)
+![Acuerdo entre modelos](imagenes/Matriz_de_acuerdo_entre_modelos.png)
 
 ---
 
