@@ -1,5 +1,12 @@
 # Notebook que no quiero subir
 Untitled.ipynb
+XGBOOST.ipynb
+NLP.ipynb
+linerSVC.ipynb
+LGB.ipynb
+EDA.ipynb
+Comparacion.ipynb
+Bayes.ipynb
 
 # Predicciones generadas
 predicciones/*.csv
